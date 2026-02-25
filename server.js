@@ -6,18 +6,16 @@ const path = require('path');
 const app = express();
 app.use(cors());
 
-// Cookies file ka pakka rasta (Absolute Path) taake server ko laazmi mil jaye
+// Cookies file ka pakka rasta
 const cookiesPath = path.join(__dirname, 'cookies.txt');
 
-// 1. ngrok warning bypass middleware
 app.use((req, res, next) => {
     res.setHeader('ngrok-skip-browser-warning', 'true');
     next();
 });
 
-// 2. Welcome Route
 app.get('/', (req, res) => {
-    res.send('<h1>SnapSave Backend is LIVE!</h1><p>Bot block and Format errors fixed.</p>');
+    res.send('<h1>SnapSave Backend is LIVE!</h1><p>Bot block fixed, Mobile API active.</p>');
 });
 
 // 3. Video info route
@@ -26,15 +24,15 @@ app.get('/api/info', async (req, res) => {
     if (!videoUrl) return res.status(400).json({ error: "URL is required" });
 
     try {
-        console.log("Tracker: Cookies ka rasta yeh hai ->", cookiesPath);
-        console.log("Tracker: IPv4 force kar diya gaya hai.");
+        console.log("Tracker: Mobile API Client aur Cookies lag gaye hain.");
 
         const output = await youtubedl(videoUrl, {
             dumpJson: true,
             skipDownload: true,
-            noWarnings: true,
-            cookies: cookiesPath, // YouTube bot block ko bypass karne ke liye
-            forceIpv4: true       // NAYI TABDEELI: Format error ko fix karne ke liye
+            // noWarnings hata diya taake errors na chupein
+            cookies: cookiesPath, 
+            forceIpv4: true,
+            extractorArgs: 'youtube:player_client=android,ios' // NAYI TABDEELI: Mobile API Trick
         });
         res.json(output);
     } catch (e) {
@@ -47,14 +45,14 @@ app.get('/api/info', async (req, res) => {
 app.get('/api/download', (req, res) => {
     const { url, format, title } = req.query;
     
-    // Title ko saaf karein
     const cleanTitle = title ? title.replace(/[^a-zA-Z0-9 ]/g, "") : "snapsave_video";
     res.setHeader('Content-Disposition', `attachment; filename="${cleanTitle}.${format}"`);
     
     const args = {
         output: '-', 
-        cookies: cookiesPath, // YouTube bot block ko bypass karne ke liye
-        forceIpv4: true       // NAYI TABDEELI: Format error ko fix karne ke liye
+        cookies: cookiesPath, 
+        forceIpv4: true,
+        extractorArgs: 'youtube:player_client=android,ios' // NAYI TABDEELI: Mobile API Trick
     };
 
     if (format === 'mp3') {
@@ -72,6 +70,5 @@ app.get('/api/download', (req, res) => {
     });
 });
 
-// 5. Port Configuration
 const PORT = process.env.PORT || 5000;
 app.listen(PORT, () => console.log(`Server is running on port ${PORT}`));
