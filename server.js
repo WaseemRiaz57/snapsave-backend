@@ -17,7 +17,7 @@ app.use((req, res, next) => {
 
 // 2. Welcome Route
 app.get('/', (req, res) => {
-    res.send('<h1>SnapSave Backend is LIVE!</h1><p>Bot block fix applied with cookies.</p>');
+    res.send('<h1>SnapSave Backend is LIVE!</h1><p>Bot block and Format errors fixed.</p>');
 });
 
 // 3. Video info route
@@ -26,14 +26,15 @@ app.get('/api/info', async (req, res) => {
     if (!videoUrl) return res.status(400).json({ error: "URL is required" });
 
     try {
-        // Yeh line humein logs mein batayegi ke naya code chal raha hai
         console.log("Tracker: Cookies ka rasta yeh hai ->", cookiesPath);
+        console.log("Tracker: IPv4 force kar diya gaya hai.");
 
         const output = await youtubedl(videoUrl, {
             dumpJson: true,
             skipDownload: true,
             noWarnings: true,
-            cookies: cookiesPath // YouTube bot block ko bypass karne ke liye
+            cookies: cookiesPath, // YouTube bot block ko bypass karne ke liye
+            forceIpv4: true       // NAYI TABDEELI: Format error ko fix karne ke liye
         });
         res.json(output);
     } catch (e) {
@@ -52,7 +53,8 @@ app.get('/api/download', (req, res) => {
     
     const args = {
         output: '-', 
-        cookies: cookiesPath // YouTube bot block ko bypass karne ke liye
+        cookies: cookiesPath, // YouTube bot block ko bypass karne ke liye
+        forceIpv4: true       // NAYI TABDEELI: Format error ko fix karne ke liye
     };
 
     if (format === 'mp3') {
