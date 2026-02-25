@@ -1,13 +1,9 @@
 const express = require('express');
 const youtubedl = require('youtube-dl-exec');
 const cors = require('cors');
-const path = require('path');
 
 const app = express();
 app.use(cors());
-
-// Cookies file ka pakka rasta
-const cookiesPath = path.join(__dirname, 'cookies.txt');
 
 app.use((req, res, next) => {
     res.setHeader('ngrok-skip-browser-warning', 'true');
@@ -15,7 +11,7 @@ app.use((req, res, next) => {
 });
 
 app.get('/', (req, res) => {
-    res.send('<h1>SnapSave Backend is LIVE!</h1><p>Bot block fixed, Mobile API active.</p>');
+    res.send('<h1>SnapSave Backend is LIVE!</h1><p>Pure Mobile API Active (No Cookies).</p>');
 });
 
 // 3. Video info route
@@ -24,15 +20,13 @@ app.get('/api/info', async (req, res) => {
     if (!videoUrl) return res.status(400).json({ error: "URL is required" });
 
     try {
-        console.log("Tracker: Mobile API Client aur Cookies lag gaye hain.");
+        console.log("Tracker: Pure Mobile API chal rahi hai (Bina Cookies ke).");
 
         const output = await youtubedl(videoUrl, {
             dumpJson: true,
             skipDownload: true,
-            // noWarnings hata diya taake errors na chupein
-            cookies: cookiesPath, 
             forceIpv4: true,
-            extractorArgs: 'youtube:player_client=android,ios' // NAYI TABDEELI: Mobile API Trick
+            extractorArgs: 'youtube:player_client=android,ios' // Sirf Mobile API
         });
         res.json(output);
     } catch (e) {
@@ -50,9 +44,8 @@ app.get('/api/download', (req, res) => {
     
     const args = {
         output: '-', 
-        cookies: cookiesPath, 
         forceIpv4: true,
-        extractorArgs: 'youtube:player_client=android,ios' // NAYI TABDEELI: Mobile API Trick
+        extractorArgs: 'youtube:player_client=android,ios' // Sirf Mobile API
     };
 
     if (format === 'mp3') {
