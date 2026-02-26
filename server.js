@@ -6,7 +6,7 @@ const path = require('path');
 const app = express();
 app.use(cors());
 
-// Cookies lazmi chahiye taake bot block na ho
+// Zinda (Alive) Cookies ka rasta
 const cookiesPath = path.join(__dirname, 'cookies.txt');
 
 app.use((req, res, next) => {
@@ -15,7 +15,7 @@ app.use((req, res, next) => {
 });
 
 app.get('/', (req, res) => {
-    res.send('<h1>SnapSave Backend is LIVE!</h1><p>Smart TV API Active.</p>');
+    res.send('<h1>SnapSave Backend is LIVE!</h1><p>MWEB Client + Node.js Environment Active.</p>');
 });
 
 // 3. Video info route
@@ -24,15 +24,18 @@ app.get('/api/info', async (req, res) => {
     if (!videoUrl) return res.status(400).json({ error: "URL is required" });
 
     try {
-        console.log("Tracker: Smart TV (tv, tvhtml5) client lagaya gaya hai.");
+        console.log("Tracker: JS Challenge fix aur mweb client lag gaya hai.");
 
         const output = await youtubedl(videoUrl, {
             dumpJson: true,
             skipDownload: true,
             cookies: cookiesPath, 
             forceIpv4: true,
-            // 👇 THE BOSS LEVEL FIX: Smart TV API 👇
-            extractorArgs: 'youtube:player_client=tv,tvhtml5' 
+            // 👇 Mobile Web (mweb) sab se strong client hai 👇
+            extractorArgs: 'youtube:player_client=mweb,default' 
+        }, {
+            // 👇 YEH JADOO KI LINE HAI (JS Challenge Solve karne ke liye) 👇
+            env: process.env 
         });
         res.json(output);
     } catch (e) {
@@ -52,8 +55,7 @@ app.get('/api/download', (req, res) => {
         output: '-', 
         cookies: cookiesPath, 
         forceIpv4: true,
-        // 👇 JADOO KI LINE YAHAN BHI 👇
-        extractorArgs: 'youtube:player_client=tv,tvhtml5'
+        extractorArgs: 'youtube:player_client=mweb,default'
     };
 
     if (format === 'mp3') {
@@ -63,7 +65,8 @@ app.get('/api/download', (req, res) => {
         args.format = 'bestvideo+bestaudio/best';
     }
 
-    const subprocess = youtubedl.exec(url, args);
+    // 👇 Yahan bhi env: process.env lazmi dena hai 👇
+    const subprocess = youtubedl.exec(url, args, { env: process.env });
     subprocess.stdout.pipe(res);
 
     subprocess.on('error', (err) => {
