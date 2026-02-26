@@ -1,6 +1,5 @@
 const express = require('express');
 const cors = require('cors');
-const ytdl = require('@distube/ytdl-core');
 
 const app = express();
 app.use(cors());
@@ -11,53 +10,77 @@ app.use((req, res, next) => {
 });
 
 app.get('/', (req, res) => {
-    res.send('<h1>SnapSave Backend is LIVE!</h1><p>Native ytdl-core Engine Active (No external APIs).</p>');
+    res.send('<h1>SnapSave Backend is LIVE!</h1><p>Official OEmbed + Premium Proxy APIs Active.</p>');
 });
 
-// 3. Video info route
+// 3. Video info route (100% Working Official OEmbed API Wapis Aa Gaya!)
 app.get('/api/info', async (req, res) => {
     const videoUrl = req.query.url;
     if (!videoUrl) return res.status(400).json({ error: "URL is required" });
 
     try {
-        console.log("Tracker: Native ytdl-core se info fetch ho rahi hai...");
+        console.log("Tracker: Official YouTube API se data fetch ho raha hai (Thumbnail ke liye)...");
         
-        // Native package se basic info nikalna
-        const info = await ytdl.getBasicInfo(videoUrl);
-        
+        const infoUrl = `https://www.youtube.com/oembed?url=${encodeURIComponent(videoUrl)}&format=json`;
+        const response = await fetch(infoUrl);
+        const data = await response.json();
+
         res.json({
-            title: info.videoDetails.title,
-            thumbnail: info.videoDetails.thumbnails[0].url,
-            uploader: info.videoDetails.author.name
+            title: data.title,
+            thumbnail: data.thumbnail_url,
+            uploader: data.author_name
         });
     } catch (e) {
         console.error("Info Fetch Error:", e);
-        res.status(400).json({ error: "Invalid URL ya YouTube ne request block kar di." });
+        res.status(400).json({ error: "Invalid URL. Sirf valid YouTube link dalein." });
     }
 });
 
-// 4. Download route (Native Stream)
+// 4. Download Route (Premium WhatsApp Bot APIs - No IP Ban)
 app.get('/api/download', async (req, res) => {
-    const { url, format, title } = req.query;
-    
-    try {
-        console.log(`Tracker: Native download start kar diya gaya hai (${format})...`);
-        const cleanTitle = title ? title.replace(/[^a-zA-Z0-9 ]/g, "") : "snapsave_video";
-        
-        // Browser ko batana ke file download karni hai
-        res.header('Content-Disposition', `attachment; filename="${cleanTitle}.${format}"`);
-        
-        if (format === 'mp3') {
-            // Sirf Audio stream
-            ytdl(url, { filter: 'audioonly', quality: 'highestaudio' }).pipe(res);
-        } else {
-            // Audio + Video (MPEG-4)
-            ytdl(url, { filter: 'audioandvideo', quality: 'highest' }).pipe(res);
-        }
+    const { url, format } = req.query;
+    let finalDownloadUrl = null;
 
-    } catch (error) {
-        console.error('Download Error:', error);
-        res.status(500).send(`<h3>Server Error:</h3><p>Video stream link fail ho gaya. Error: ${error.message}</p>`);
+    console.log(`Tracker: Proxy APIs se ${format} link dhoondna shuru...`);
+
+    // API 1: BK9 API (Boht fast aur stable)
+    if (!finalDownloadUrl) {
+        try {
+            console.log("Tracker: Trying BK9 API...");
+            const resApi = await fetch(`https://bk9.fun/download/youtube?url=${encodeURIComponent(url)}`);
+            const data = await resApi.json();
+            
+            if (data && data.status && data.BK9) {
+                finalDownloadUrl = format === 'mp3' ? data.BK9.mp3 : data.BK9.mp4;
+                console.log("Tracker: Kamyabi! BK9 se link mil gaya.");
+            }
+        } catch (e) {
+            console.log("Tracker: ❌ BK9 failed.");
+        }
+    }
+
+    // API 2: RyzenDesu API (Solid Backup)
+    if (!finalDownloadUrl) {
+        try {
+            console.log("Tracker: Trying RyzenDesu API...");
+            const endpoint = format === 'mp3' ? 'ytmp3' : 'ytmp4';
+            const resApi = await fetch(`https://api.ryzendesu.vip/api/downloader/${endpoint}?url=${encodeURIComponent(url)}`);
+            const data = await resApi.json();
+            
+            if (data && data.url) {
+                finalDownloadUrl = data.url;
+                console.log("Tracker: Kamyabi! RyzenDesu se link mil gaya.");
+            }
+        } catch (e) {
+            console.log("Tracker: ❌ RyzenDesu failed.");
+        }
+    }
+
+    // Agar link mil gaya toh user ko direct video de do
+    if (finalDownloadUrl) {
+        res.redirect(finalDownloadUrl);
+    } else {
+        res.status(500).send(`<h3>Server Error:</h3><p>Maazrat, is waqt saari proxy APIs overload hain. Thori der baad try karein.</p>`);
     }
 });
 
