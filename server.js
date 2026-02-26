@@ -6,7 +6,7 @@ const path = require('path');
 const app = express();
 app.use(cors());
 
-// Cookies lazmi chahiye bot block rokne ke liye
+// Cookies lazmi chahiye taake bot block na ho
 const cookiesPath = path.join(__dirname, 'cookies.txt');
 
 app.use((req, res, next) => {
@@ -15,7 +15,7 @@ app.use((req, res, next) => {
 });
 
 app.get('/', (req, res) => {
-    res.send('<h1>SnapSave Backend is LIVE!</h1><p>N-Challenge EJS Solver Active.</p>');
+    res.send('<h1>SnapSave Backend is LIVE!</h1><p>Smart TV API Active.</p>');
 });
 
 // 3. Video info route
@@ -24,16 +24,15 @@ app.get('/api/info', async (req, res) => {
     if (!videoUrl) return res.status(400).json({ error: "URL is required" });
 
     try {
-        console.log("Tracker: EJS Solver script add kar di gayi hai.");
+        console.log("Tracker: Smart TV (tv, tvhtml5) client lagaya gaya hai.");
 
         const output = await youtubedl(videoUrl, {
             dumpJson: true,
             skipDownload: true,
-            cookies: cookiesPath,
+            cookies: cookiesPath, 
             forceIpv4: true,
-            // 👇 YEH NAYI LINE N-CHALLENGE SOLVE KAREGI 👇
-            remoteComponents: 'ejs:github', 
-            extractorArgs: 'youtube:player_client=default,-android_sdkless' 
+            // 👇 THE BOSS LEVEL FIX: Smart TV API 👇
+            extractorArgs: 'youtube:player_client=tv,tvhtml5' 
         });
         res.json(output);
     } catch (e) {
@@ -54,8 +53,7 @@ app.get('/api/download', (req, res) => {
         cookies: cookiesPath, 
         forceIpv4: true,
         // 👇 JADOO KI LINE YAHAN BHI 👇
-        remoteComponents: 'ejs:github',
-        extractorArgs: 'youtube:player_client=default,-android_sdkless'
+        extractorArgs: 'youtube:player_client=tv,tvhtml5'
     };
 
     if (format === 'mp3') {
