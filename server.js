@@ -6,7 +6,7 @@ const path = require('path');
 const app = express();
 app.use(cors());
 
-// Cookies file ka absolute rasta (Cookies lazmi chahiye!)
+// Cookies lazmi chahiye bot block rokne ke liye
 const cookiesPath = path.join(__dirname, 'cookies.txt');
 
 app.use((req, res, next) => {
@@ -15,7 +15,7 @@ app.use((req, res, next) => {
 });
 
 app.get('/', (req, res) => {
-    res.send('<h1>SnapSave Backend is LIVE!</h1><p>Bot block and format issue completely fixed.</p>');
+    res.send('<h1>SnapSave Backend is LIVE!</h1><p>N-Challenge EJS Solver Active.</p>');
 });
 
 // 3. Video info route
@@ -24,14 +24,15 @@ app.get('/api/info', async (req, res) => {
     if (!videoUrl) return res.status(400).json({ error: "URL is required" });
 
     try {
-        console.log("Tracker: Cookies lag gayi hain aur broken android API skip kar di gayi hai.");
+        console.log("Tracker: EJS Solver script add kar di gayi hai.");
 
         const output = await youtubedl(videoUrl, {
             dumpJson: true,
             skipDownload: true,
-            cookies: cookiesPath, // Cookies wapis aagayin bot block rokne ke liye
+            cookies: cookiesPath,
             forceIpv4: true,
-            // 👇 YEH HAI WOH JADOO KI LINE 👇
+            // 👇 YEH NAYI LINE N-CHALLENGE SOLVE KAREGI 👇
+            remoteComponents: 'ejs:github', 
             extractorArgs: 'youtube:player_client=default,-android_sdkless' 
         });
         res.json(output);
@@ -53,6 +54,7 @@ app.get('/api/download', (req, res) => {
         cookies: cookiesPath, 
         forceIpv4: true,
         // 👇 JADOO KI LINE YAHAN BHI 👇
+        remoteComponents: 'ejs:github',
         extractorArgs: 'youtube:player_client=default,-android_sdkless'
     };
 
