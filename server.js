@@ -1,13 +1,9 @@
 const express = require('express');
 const youtubedl = require('youtube-dl-exec');
 const cors = require('cors');
-const path = require('path');
 
 const app = express();
 app.use(cors());
-
-// Zinda (Alive) Cookies ka rasta
-const cookiesPath = path.join(__dirname, 'cookies.txt');
 
 app.use((req, res, next) => {
     res.setHeader('ngrok-skip-browser-warning', 'true');
@@ -15,7 +11,7 @@ app.use((req, res, next) => {
 });
 
 app.get('/', (req, res) => {
-    res.send('<h1>SnapSave Backend is LIVE!</h1><p>MWEB Client + Node.js Environment Active.</p>');
+    res.send('<h1>SnapSave Backend is LIVE!</h1><p>Phantom Browser API (No Cookies) Active.</p>');
 });
 
 // 3. Video info route
@@ -24,18 +20,18 @@ app.get('/api/info', async (req, res) => {
     if (!videoUrl) return res.status(400).json({ error: "URL is required" });
 
     try {
-        console.log("Tracker: JS Challenge fix aur mweb client lag gaya hai.");
+        console.log("Tracker: Phantom Browser Headers lag gaye hain (No Cookies).");
 
         const output = await youtubedl(videoUrl, {
             dumpJson: true,
             skipDownload: true,
-            cookies: cookiesPath, 
-            forceIpv4: true,
-            // 👇 Mobile Web (mweb) sab se strong client hai 👇
-            extractorArgs: 'youtube:player_client=mweb,default' 
-        }, {
-            // 👇 YEH JADOO KI LINE HAI (JS Challenge Solve karne ke liye) 👇
-            env: process.env 
+            // 👇 THE PHANTOM TRICK: YouTube ko lagay ga asli Windows PC hai 👇
+            addHeader: [
+                'referer:youtube.com',
+                'user-agent:Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36'
+            ],
+            // Cookies hata di hain kyunki Cloud IP par block ho jati hain
+            extractorArgs: 'youtube:player_client=web'
         });
         res.json(output);
     } catch (e) {
@@ -53,9 +49,11 @@ app.get('/api/download', (req, res) => {
     
     const args = {
         output: '-', 
-        cookies: cookiesPath, 
-        forceIpv4: true,
-        extractorArgs: 'youtube:player_client=mweb,default'
+        addHeader: [
+            'referer:youtube.com',
+            'user-agent:Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36'
+        ],
+        extractorArgs: 'youtube:player_client=web'
     };
 
     if (format === 'mp3') {
@@ -65,8 +63,7 @@ app.get('/api/download', (req, res) => {
         args.format = 'bestvideo+bestaudio/best';
     }
 
-    // 👇 Yahan bhi env: process.env lazmi dena hai 👇
-    const subprocess = youtubedl.exec(url, args, { env: process.env });
+    const subprocess = youtubedl.exec(url, args);
     subprocess.stdout.pipe(res);
 
     subprocess.on('error', (err) => {
