@@ -1,9 +1,13 @@
 const express = require('express');
 const youtubedl = require('youtube-dl-exec');
 const cors = require('cors');
+const path = require('path');
 
 const app = express();
 app.use(cors());
+
+// Cookies file ka absolute rasta (Cookies lazmi chahiye!)
+const cookiesPath = path.join(__dirname, 'cookies.txt');
 
 app.use((req, res, next) => {
     res.setHeader('ngrok-skip-browser-warning', 'true');
@@ -11,7 +15,7 @@ app.use((req, res, next) => {
 });
 
 app.get('/', (req, res) => {
-    res.send('<h1>SnapSave Backend is LIVE!</h1><p>Pure Mobile API Active (No Cookies).</p>');
+    res.send('<h1>SnapSave Backend is LIVE!</h1><p>Bot block and format issue completely fixed.</p>');
 });
 
 // 3. Video info route
@@ -20,13 +24,15 @@ app.get('/api/info', async (req, res) => {
     if (!videoUrl) return res.status(400).json({ error: "URL is required" });
 
     try {
-        console.log("Tracker: Pure Mobile API chal rahi hai (Bina Cookies ke).");
+        console.log("Tracker: Cookies lag gayi hain aur broken android API skip kar di gayi hai.");
 
         const output = await youtubedl(videoUrl, {
             dumpJson: true,
             skipDownload: true,
+            cookies: cookiesPath, // Cookies wapis aagayin bot block rokne ke liye
             forceIpv4: true,
-            extractorArgs: 'youtube:player_client=android,ios' // Sirf Mobile API
+            // 👇 YEH HAI WOH JADOO KI LINE 👇
+            extractorArgs: 'youtube:player_client=default,-android_sdkless' 
         });
         res.json(output);
     } catch (e) {
@@ -44,8 +50,10 @@ app.get('/api/download', (req, res) => {
     
     const args = {
         output: '-', 
+        cookies: cookiesPath, 
         forceIpv4: true,
-        extractorArgs: 'youtube:player_client=android,ios' // Sirf Mobile API
+        // 👇 JADOO KI LINE YAHAN BHI 👇
+        extractorArgs: 'youtube:player_client=default,-android_sdkless'
     };
 
     if (format === 'mp3') {
