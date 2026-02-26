@@ -10,101 +10,92 @@ app.use((req, res, next) => {
 });
 
 app.get('/', (req, res) => {
-    res.send('<h1>SnapSave Backend is LIVE!</h1><p>Hacker Loop (Multi-Scraper APIs) Active.</p>');
+    res.send('<h1>SnapSave Backend is LIVE!</h1><p>VIP RapidAPI (YT-API) Active.</p>');
 });
 
-// 3. Video info route (Official OEmbed - 100% Working for Thumbnails)
+// YouTube URL se 11 hindo ka Video ID nikalne ka formula
+function extractVideoId(url) {
+    const regex = /(?:youtube\.com\/(?:[^\/]+\/.+\/|(?:v|e(?:mbed)?)\/|.*[?&]v=|shorts\/)|youtu\.be\/)([^"&?\/\s]{11})/gi;
+    const match = regex.exec(url);
+    return match ? match[1] : null;
+}
+
+// 3. Video info route (Official OEmbed - 100% Working)
 app.get('/api/info', async (req, res) => {
     const videoUrl = req.query.url;
     if (!videoUrl) return res.status(400).json({ error: "URL is required" });
-
     try {
-        console.log("Tracker: Official YouTube API se data fetch ho raha hai...");
-        const infoUrl = `https://www.youtube.com/oembed?url=${encodeURIComponent(videoUrl)}&format=json`;
-        const response = await fetch(infoUrl);
+        const response = await fetch(`https://www.youtube.com/oembed?url=${encodeURIComponent(videoUrl)}&format=json`);
         const data = await response.json();
-
-        res.json({
-            title: data.title,
-            thumbnail: data.thumbnail_url,
-            uploader: data.author_name
-        });
-    } catch (e) {
-        console.error("Info Fetch Error:", e);
-        res.status(400).json({ error: "Invalid URL. Sirf valid YouTube link dalein." });
+        res.json({ title: data.title, thumbnail: data.thumbnail_url, uploader: data.author_name });
+    } catch (e) { 
+        res.status(400).json({ error: "Invalid URL." }); 
     }
 });
 
-// 4. Download Route (The Hacker Loop - 4 APIs in a row)
+// 4. Download Route (RapidAPI VIP Route)
 app.get('/api/download', async (req, res) => {
     const { url, format } = req.query;
-    let finalDownloadUrl = null;
+    const videoId = extractVideoId(url);
 
-    console.log(`Tracker: Hacker Loop Started for ${format}...`);
+    if (!videoId) return res.status(400).send("<h3>Error:</h3><p>Invalid Video ID.</p>");
 
-    // API 1: BK9 (Boht popular hai)
-    if (!finalDownloadUrl) {
-        try {
-            console.log("Tracker: Trying API 1 (BK9)...");
-            const resApi = await fetch(`https://bk9.fun/download/youtube?url=${encodeURIComponent(url)}`);
-            const data = await resApi.json();
-            if (data?.BK9) {
-                finalDownloadUrl = format === 'mp3' ? data.BK9.mp3 : data.BK9.mp4;
-                if (finalDownloadUrl) console.log("Tracker: Kamyabi! BK9 se link mil gaya.");
+    console.log(`Tracker: RapidAPI (YT-API) se ${format} link dhoondna shuru... ID: ${videoId}`);
+
+    // 👇 Tasweer se li gayi aapki API Key 👇
+    const RAPID_API_KEY = "50d7021205msh38d3b9a1afbceaap1ee050jsnfaffbec75639"; 
+    const RAPID_API_HOST = "yt-api.p.rapidapi.com";
+
+    const options = {
+        method: 'GET',
+        headers: {
+            'x-rapidapi-key': RAPID_API_KEY,
+            'x-rapidapi-host': RAPID_API_HOST
+        }
+    };
+
+    try {
+        const response = await fetch(`https://${RAPID_API_HOST}/video/info?id=${videoId}`, options);
+        const data = await response.json();
+
+        let finalDownloadUrl = null;
+
+        // Step 1: Normal tareeqay se link dhoondna
+        const formats = data?.streamingData?.formats || [];
+        const adaptiveFormats = data?.streamingData?.adaptiveFormats || [];
+
+        if (format === 'mp3') {
+            const audioStreams = adaptiveFormats.filter(f => f.mimeType && f.mimeType.includes('audio'));
+            if (audioStreams.length > 0) finalDownloadUrl = audioStreams[0].url;
+        } else {
+            const videoStreams = formats.filter(f => f.mimeType && f.mimeType.includes('video/mp4'));
+            if (videoStreams.length > 0) finalDownloadUrl = videoStreams[0].url;
+        }
+
+        // Step 2: The Hacker Fallback (Agar uper se link na mile)
+        if (!finalDownloadUrl && data) {
+            console.log("Tracker: Standard JSON array fail, now deep searching...");
+            const rawString = JSON.stringify(data);
+            // JSON ke andar se direct googlevideo ka link nikalne ka Jadoo
+            const urlRegex = /(https:\/\/[^\s"']+(?:googlevideo\.com\/videoplayback)[^\s"']+)/g;
+            const matches = rawString.match(urlRegex);
+            if (matches && matches.length > 0) {
+                finalDownloadUrl = matches[0];
             }
-        } catch (e) { console.log("Tracker: ❌ API 1 failed."); }
-    }
+        }
 
-    // API 2: RyzenDesu (Strong backup)
-    if (!finalDownloadUrl) {
-        try {
-            console.log("Tracker: Trying API 2 (RyzenDesu)...");
-            const endpoint = format === 'mp3' ? 'ytmp3' : 'ytmp4';
-            const resApi = await fetch(`https://api.ryzendesu.vip/api/downloader/${endpoint}?url=${encodeURIComponent(url)}`);
-            const data = await resApi.json();
-            if (data?.url) {
-                finalDownloadUrl = data.url;
-                console.log("Tracker: Kamyabi! RyzenDesu se link mil gaya.");
-            }
-        } catch (e) { console.log("Tracker: ❌ API 2 failed."); }
-    }
+        // Final Faisla
+        if (finalDownloadUrl) {
+            console.log("Tracker: Kamyabi! VIP link mil gaya.");
+            res.redirect(finalDownloadUrl);
+        } else {
+            // Agar koi error aye toh safaid screen par error show karega taake humein pata chale
+            res.send(`<h3>API Error: Link nahi mila.</h3><p>Data: ${JSON.stringify(data).substring(0, 1000)}...</p>`);
+        }
 
-    // API 3: Siputzx (Latest bypasser)
-    if (!finalDownloadUrl) {
-        try {
-            console.log("Tracker: Trying API 3 (Siputzx)...");
-            const endpoint = format === 'mp3' ? 'ytmp3' : 'ytmp4';
-            const resApi = await fetch(`https://api.siputzx.my.id/api/d/${endpoint}?url=${encodeURIComponent(url)}`);
-            const data = await resApi.json();
-            // Inka data structure thora alag hota hai
-            const foundUrl = data?.data?.dl || data?.data?.url || data?.url;
-            if (foundUrl) {
-                finalDownloadUrl = foundUrl;
-                console.log("Tracker: Kamyabi! Siputzx se link mil gaya.");
-            }
-        } catch (e) { console.log("Tracker: ❌ API 3 failed."); }
-    }
-
-    // API 4: Vreden (Final fallback)
-    if (!finalDownloadUrl) {
-        try {
-            console.log("Tracker: Trying API 4 (Vreden)...");
-            const endpoint = format === 'mp3' ? 'ytmp3' : 'ytmp4';
-            const resApi = await fetch(`https://api.vreden.web.id/api/${endpoint}?url=${encodeURIComponent(url)}`);
-            const data = await resApi.json();
-            const foundUrl = data?.result?.download?.url || data?.result?.url || data?.url;
-            if (foundUrl) {
-                finalDownloadUrl = foundUrl;
-                console.log("Tracker: Kamyabi! Vreden se link mil gaya.");
-            }
-        } catch (e) { console.log("Tracker: ❌ API 4 failed."); }
-    }
-
-    // Aakhri faisla: Agar charo mein se kisi ek ne bhi link diya toh user ko bhej do
-    if (finalDownloadUrl) {
-        res.redirect(finalDownloadUrl);
-    } else {
-        res.status(500).send(`<h3>Server Error:</h3><p>Maazrat, is waqt sari 4 Scraper APIs block ya down hain. Lagta hai YouTube ne un sab ko temporary block kiya hua hai.</p>`);
+    } catch (error) {
+        console.error('Download Error:', error);
+        res.status(500).send(`<h3>Server Error:</h3><p>API connect nahi ho rahi.</p>`);
     }
 });
 
