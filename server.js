@@ -10,7 +10,7 @@ app.use((req, res, next) => {
 });
 
 app.get('/', (req, res) => {
-    res.send('<h1>SnapSave Backend is LIVE!</h1><p>Free API Serverless Route (Cobalt V11) Active.</p>');
+    res.send('<h1>SnapSave Backend is LIVE!</h1><p>Free Community Cobalt API Active.</p>');
 });
 
 // 3. Video info route (Official YouTube OEmbed API)
@@ -36,23 +36,20 @@ app.get('/api/info', async (req, res) => {
     }
 });
 
-// 4. Download route (Updated Cobalt API)
+// 4. Download route (Community Cobalt API)
 app.get('/api/download', async (req, res) => {
     const { url, format } = req.query;
     
     try {
-        console.log(`Tracker: Cobalt API se ${format} ka direct link banaya ja raha hai...`);
+        console.log(`Tracker: Community API se ${format} ka direct link banaya ja raha hai...`);
         
-        // NAYA ADDRESS: Sirf '/' use hoga
-        const cobaltRes = await fetch('https://api.cobalt.tools/', {
+        // NAYA ADDRESS: Public Community Instance (No JWT required)
+        const cobaltRes = await fetch('https://cobalt.q0.app/', {
             method: 'POST',
             headers: {
                 'Accept': 'application/json',
                 'Content-Type': 'application/json',
-                'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
-                // 👇 YEH 2 LINES LAZMI HAIN COBALT BLOCK SE BACHNE KE LIYE 👇
-                'Origin': 'https://cobalt.tools',
-                'Referer': 'https://cobalt.tools/'
+                'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36'
             },
             body: JSON.stringify({
                 url: url,
@@ -62,7 +59,6 @@ app.get('/api/download', async (req, res) => {
             })
         });
 
-        // Agar API block kare toh chupanay ke bajaye error show karein
         if (!cobaltRes.ok) {
             const errorText = await cobaltRes.text();
             console.error("Cobalt API Error:", errorText);
