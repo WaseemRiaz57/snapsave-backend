@@ -11,8 +11,8 @@
   "license": "ISC",
   "description": "",
   "dependencies": {
+    "@distube/ytdl-core": "^4.16.12",
     "cors": "^2.8.6",
-    "express": "^5.2.1",
-    "youtube-dl-exec": "^3.1.2"
+    "express": "^5.2.1"
   }
 }
